@@ -8,12 +8,37 @@ local HttpService = game:GetService("HttpService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
+--// CONFIGURAÇÃO E SAVE SYSTEM
+local FileName = "LuresHub_Config.json"
+
 getgenv().Settings = {
     FarmChests = false,
     InstantTeleport = false,
     ChestNames = {"Chest1", "Chest2", "Chest3", "Chest4", "Chest5", "Chest6", "Chest"},
     VisitedChests = {} 
 }
+
+local function SaveSettings()
+    local DataToSave = {
+        FarmChests = getgenv().Settings.FarmChests,
+        InstantTeleport = getgenv().Settings.InstantTeleport
+    }
+    pcall(function()
+        writefile(FileName, HttpService:JSONEncode(DataToSave))
+    end)
+end
+
+local function LoadSettings()
+    if isfile(FileName) then
+        pcall(function()
+            local Data = HttpService:JSONDecode(readfile(FileName))
+            if Data.FarmChests ~= nil then getgenv().Settings.FarmChests = Data.FarmChests end
+            if Data.InstantTeleport ~= nil then getgenv().Settings.InstantTeleport = Data.InstantTeleport end
+        end)
+    end
+end
+
+LoadSettings() -- Carrega as configurações ao iniciar
 
 local IMAGE_ID = "rbxassetid://119959180684937"
 
@@ -380,8 +405,9 @@ RunService.Stepped:Connect(function()
     end
 end)
 
-CreateToggle("Auto Farm", false, function(Val)
+CreateToggle("Auto Farm", getgenv().Settings.FarmChests, function(Val)
     getgenv().Settings.FarmChests = Val
+    SaveSettings()
     if Val then
         getgenv().Settings.VisitedChests = {}
         StartFarmLogic()
@@ -390,8 +416,9 @@ CreateToggle("Auto Farm", false, function(Val)
     end
 end)
 
-CreateToggle("TP Instantâneo", false, function(Val)
+CreateToggle("TP Instantâneo", getgenv().Settings.InstantTeleport, function(Val)
     getgenv().Settings.InstantTeleport = Val
+    SaveSettings()
     if Val then
         SetStatus("Modo: TP")
     else
@@ -399,9 +426,14 @@ CreateToggle("TP Instantâneo", false, function(Val)
     end
 end)
 
+-- Iniciar lógica se o save carregou como ativado
+if getgenv().Settings.FarmChests then
+    StartFarmLogic()
+end
+
 game:GetService("StarterGui"):SetCore("SendNotification", {
     Title = "Lures Hub v1",
-    Text = "Carregado (Low Server)!",
+    Text = "Configs Carregadas!",
     Duration = 3,
     Icon = IMAGE_ID
 })
