@@ -1,10 +1,3 @@
---[[ 
-    💙 LURES HUB V6 - CYBERPUNK EDITION 💙
-    Autor: Gemini AI
-    Tema: Neon Blue & Dark Gradient
-]]
-
---// SERVIÇOS
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local TeleportService = game:GetService("TeleportService")
@@ -15,36 +8,32 @@ local HttpService = game:GetService("HttpService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
---// CONFIGURAÇÕES GLOBAIS
 getgenv().Settings = {
     FarmChests = false,
-    InstantTeleport = false, -- false = Voo (Tween), true = TP Instantâneo
+    InstantTeleport = false,
     ChestNames = {"Chest1", "Chest2", "Chest3", "Chest4", "Chest5", "Chest6", "Chest"},
     VisitedChests = {} 
 }
 
 local IMAGE_ID = "rbxassetid://119959180684937"
 
---// PROTEÇÃO DE GUI
 local Viewport = (gethui and gethui()) or (getgenv().protect_gui and protect_gui()) or CoreGui
-if Viewport:FindFirstChild("LuresHubV6") then Viewport.LuresHubV6:Destroy() end
+if Viewport:FindFirstChild("LuresHubV1") then Viewport.LuresHubV1:Destroy() end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "LuresHubV6"
+ScreenGui.Name = "LuresHubV1"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = Viewport
 
---// 🎨 TEMA & ESTILOS
 local THEME = {
     Bg = Color3.fromRGB(12, 12, 18),
     Gradient1 = Color3.fromRGB(10, 15, 25),
     Gradient2 = Color3.fromRGB(20, 30, 50),
-    Accent = Color3.fromRGB(0, 230, 255), -- Azul Cyan Neon
+    Accent = Color3.fromRGB(0, 230, 255),
     Text = Color3.fromRGB(255, 255, 255),
-    Status = Color3.fromRGB(255, 180, 50) -- Laranja Amarelado
+    Status = Color3.fromRGB(255, 180, 50)
 }
 
---// 🔧 FUNÇÃO DRAGGABLE (ARRASTAR)
 local function MakeDraggable(Frame)
     local dragging, dragInput, dragStart, startPos
     local function update(input)
@@ -68,7 +57,6 @@ local function MakeDraggable(Frame)
     end)
 end
 
---// 🖥️ INTERFACE PRINCIPAL
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 450, 0, 280)
@@ -77,7 +65,6 @@ MainFrame.BackgroundColor3 = THEME.Bg
 MainFrame.BorderSizePixel = 0
 MainFrame.Parent = ScreenGui
 
--- Arredondamento e Gradiente
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 local MainGradient = Instance.new("UIGradient")
 MainGradient.Color = ColorSequence.new{
@@ -87,7 +74,6 @@ MainGradient.Color = ColorSequence.new{
 MainGradient.Rotation = 45
 MainGradient.Parent = MainFrame
 
--- Borda Brilhante (Glow)
 local Glow = Instance.new("UIStroke")
 Glow.Color = THEME.Accent
 Glow.Thickness = 1.5
@@ -96,7 +82,6 @@ Glow.Parent = MainFrame
 
 MakeDraggable(MainFrame)
 
--- TOPO (HEADER)
 local Header = Instance.new("Frame")
 Header.Size = UDim2.new(1, 0, 0, 50)
 Header.BackgroundTransparency = 1
@@ -114,7 +99,6 @@ Title.TextSize = 24
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Header
 
--- Botão Minimizar
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Text = "-"
 CloseBtn.TextColor3 = THEME.Accent
@@ -125,20 +109,18 @@ CloseBtn.Size = UDim2.new(0, 40, 0, 40)
 CloseBtn.Position = UDim2.new(1, -45, 0, 5)
 CloseBtn.Parent = Header
 
--- Ícone Flutuante (Botão Abrir)
 local OpenBtn = Instance.new("ImageButton")
 OpenBtn.Name = "OpenButton"
 OpenBtn.Image = IMAGE_ID
 OpenBtn.BackgroundColor3 = THEME.Bg
 OpenBtn.Size = UDim2.new(0, 60, 0, 60)
-OpenBtn.Position = UDim2.new(0.1, 0, 0.1, 0) -- Começa no canto
+OpenBtn.Position = UDim2.new(0.1, 0, 0.1, 0)
 OpenBtn.Visible = false
 OpenBtn.Parent = ScreenGui
 Instance.new("UICorner", OpenBtn).CornerRadius = UDim.new(0, 16)
 local OpenStroke = Instance.new("UIStroke"); OpenStroke.Color = THEME.Accent; OpenStroke.Thickness = 2; OpenStroke.Parent = OpenBtn
 MakeDraggable(OpenBtn)
 
--- Lógica Minimizar/Maximizar
 CloseBtn.MouseButton1Click:Connect(function() 
     MainFrame.Visible = false 
     OpenBtn.Visible = true 
@@ -148,7 +130,6 @@ OpenBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = true 
 end)
 
--- LINHA DIVISÓRIA
 local Line = Instance.new("Frame")
 Line.Size = UDim2.new(1, 0, 0, 1)
 Line.Position = UDim2.new(0, 0, 0, 50)
@@ -157,7 +138,6 @@ Line.BorderSizePixel = 0
 Line.Transparency = 0.5
 Line.Parent = MainFrame
 
--- ÁREA DE STATUS (Real-time)
 local StatusFrame = Instance.new("Frame")
 StatusFrame.Size = UDim2.new(1, -30, 0, 35)
 StatusFrame.Position = UDim2.new(0, 15, 0, 65)
@@ -168,7 +148,7 @@ Instance.new("UICorner", StatusFrame).CornerRadius = UDim.new(0, 6)
 local StatusStroke = Instance.new("UIStroke"); StatusStroke.Color = THEME.Accent; StatusStroke.Transparency = 0.7; StatusStroke.Parent = StatusFrame
 
 local StatusLabel = Instance.new("TextLabel")
-StatusLabel.Text = "Status: Aguardando Início..."
+StatusLabel.Text = "Status: Aguardando..."
 StatusLabel.Size = UDim2.new(1, 0, 1, 0)
 StatusLabel.BackgroundTransparency = 1
 StatusLabel.TextColor3 = THEME.Status
@@ -180,7 +160,6 @@ local function SetStatus(text)
     StatusLabel.Text = "Status: " .. text
 end
 
--- CONTAINER DE BOTÕES
 local Container = Instance.new("ScrollingFrame")
 Container.Size = UDim2.new(1, -30, 1, -120)
 Container.Position = UDim2.new(0, 15, 0, 110)
@@ -192,7 +171,6 @@ local UIList = Instance.new("UIListLayout", Container)
 UIList.Padding = UDim.new(0, 10)
 UIList.SortOrder = Enum.SortOrder.LayoutOrder
 
---// FUNÇÃO CRIAR TOGGLE
 local function CreateToggle(Text, Default, Callback)
     local ToggleBtn = Instance.new("TextButton")
     ToggleBtn.Size = UDim2.new(1, 0, 0, 45)
@@ -244,33 +222,44 @@ local function CreateToggle(Text, Default, Callback)
         UpdateVisual()
         Callback(Enabled)
     end)
-    UpdateVisual() -- Init state
+    UpdateVisual()
 end
 
---// 🧠 LÓGICA DE FARM
-
 local function ServerHop()
-    -- Contagem Regressiva Visual
-    for i = 3, 1, -1 do
-        SetStatus("Trocando de Server em " .. i .. "...")
-        task.wait(1)
-    end
-    SetStatus("Iniciando Teleporte de Servidor...")
-    
+    SetStatus("Buscando server < 5 players...")
     local PlaceId = game.PlaceId
+    
     local Success, Result = pcall(function()
         return HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
     end)
     
+    local Found = false
+    
     if Success and Result and Result.data then
         for _, s in ipairs(Result.data) do
-            if s.playing < s.maxPlayers and s.id ~= game.JobId then
+            if s.playing and s.playing <= 5 and s.id ~= game.JobId then
+                SetStatus("Encontrado: " .. s.playing .. " players")
                 TeleportService:TeleportToPlaceInstance(PlaceId, s.id, LocalPlayer)
-                return
+                Found = true
+                break
+            end
+        end
+        
+        if not Found then
+            SetStatus("Tentando server aleatório...")
+            for _, s in ipairs(Result.data) do
+                if s.playing < s.maxPlayers and s.id ~= game.JobId then
+                    TeleportService:TeleportToPlaceInstance(PlaceId, s.id, LocalPlayer)
+                    Found = true
+                    break
+                end
             end
         end
     end
-    SetStatus("Falha ao achar server, tentando novamente...")
+    
+    if not Found then
+        SetStatus("Erro ao trocar. Tentando dnv...")
+    end
 end
 
 local function GetNextChest()
@@ -282,9 +271,7 @@ local function GetNextChest()
 
     for _, obj in pairs(workspace:GetDescendants()) do
         if table.find(getgenv().Settings.ChestNames, obj.Name) and (obj:IsA("Model") or obj:IsA("BasePart")) then
-            -- Verifica se já fomos lá
             if not getgenv().Settings.VisitedChests[obj] then
-                -- Pega posição
                 local Pos = (obj:IsA("Model") and obj.PrimaryPart and obj.PrimaryPart.Position) or (obj:IsA("BasePart") and obj.Position)
                 
                 if Pos then
@@ -301,9 +288,8 @@ local function GetNextChest()
 end
 
 local function Collect(Chest)
-    SetStatus("Interagindo com " .. Chest.Name .. "...")
+    SetStatus("Coletando: " .. Chest.Name)
     
-    -- Método Touch
     local function TouchParts(target)
         if target:IsA("BasePart") then
             firetouchinterest(LocalPlayer.Character.HumanoidRootPart, target, 0)
@@ -317,7 +303,6 @@ local function Collect(Chest)
         TouchParts(Chest)
     end
     
-    -- Método Click (Interação Virtual)
     VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
     task.wait(0.05)
     VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
@@ -334,7 +319,7 @@ local function StartFarmLogic()
             local Chest = GetNextChest()
             
             if Chest then
-                SetStatus("Alvo encontrado: " .. Chest.Name)
+                SetStatus("Indo para: " .. Chest.Name)
                 
                 local DestCFrame = nil
                 if Chest:IsA("Model") then 
@@ -345,27 +330,21 @@ local function StartFarmLogic()
                 
                 local MyRoot = LocalPlayer.Character.HumanoidRootPart
                 
-                -- DECISÃO DE MOVIMENTO
                 if getgenv().Settings.InstantTeleport then
-                    -- TP Instantâneo
                     MyRoot.CFrame = DestCFrame
                     task.wait(0.1)
                 else
-                    -- Voo (Tween)
                     local Dist = (DestCFrame.Position - MyRoot.Position).Magnitude
-                    if Dist > 10 then -- Só voa se estiver longe
-                        SetStatus("Voando para " .. Chest.Name .. "...")
+                    if Dist > 10 then
                         local Speed = 300 
                         local Time = Dist / Speed
                         
                         local Tween = TweenService:Create(MyRoot, TweenInfo.new(Time, Enum.EasingStyle.Linear), {CFrame = DestCFrame})
                         Tween:Play()
                         
-                        -- Loop de espera do voo
                         local Elapsed = 0
                         while Elapsed < Time do
                             if not getgenv().Settings.FarmChests then Tween:Cancel(); break end
-                            -- Se chegar muito perto, para o tween
                             if (DestCFrame.Position - MyRoot.Position).Magnitude < 5 then Tween:Cancel(); break end
                             
                             Elapsed = Elapsed + 0.1
@@ -374,26 +353,23 @@ local function StartFarmLogic()
                     end
                 end
 
-                -- Coleta
                 if getgenv().Settings.FarmChests then
                     Collect(Chest)
                     getgenv().Settings.VisitedChests[Chest] = true
-                    task.wait(0.8) -- Delay natural
+                    task.wait(0.8)
                 end
                 
             else
-                -- Nenhum baú encontrado -> Server Hop
-                SetStatus("Mapa limpo! Preparando Server Hop...")
+                SetStatus("Sem baús. Server Hop...")
                 ServerHop()
-                task.wait(5) -- Evita spam se falhar
+                task.wait(8)
             end
             task.wait(0.1)
         end
-        SetStatus("Script Parado.")
+        SetStatus("Parado.")
     end)
 end
 
---// NOCLIP (Evita bater em paredes)
 RunService.Stepped:Connect(function()
     if getgenv().Settings.FarmChests and LocalPlayer.Character then
         for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
@@ -404,30 +380,28 @@ RunService.Stepped:Connect(function()
     end
 end)
 
---// BINDING DOS BOTÕES
-CreateToggle("ATIVAR AUTO FARM", false, function(Val)
+CreateToggle("Auto Farm", false, function(Val)
     getgenv().Settings.FarmChests = Val
     if Val then
-        getgenv().Settings.VisitedChests = {} -- Limpa a memória ao reiniciar
+        getgenv().Settings.VisitedChests = {}
         StartFarmLogic()
     else
-        SetStatus("Parando script...")
+        SetStatus("Parando...")
     end
 end)
 
-CreateToggle("MODO TP INSTANTÂNEO", false, function(Val)
+CreateToggle("TP Instantâneo", false, function(Val)
     getgenv().Settings.InstantTeleport = Val
     if Val then
-        SetStatus("Modo alterado para: TELEPORTE (Risco)")
+        SetStatus("Modo: TP")
     else
-        SetStatus("Modo alterado para: VOO (Seguro)")
+        SetStatus("Modo: Voo")
     end
 end)
 
--- Notificação Inicial
 game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "Lures Hub V6",
-    Text = "Carregado com Sucesso!",
-    Duration = 5,
+    Title = "Lures Hub v1",
+    Text = "Carregado (Low Server)!",
+    Duration = 3,
     Icon = IMAGE_ID
 })
