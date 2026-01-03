@@ -1,3 +1,4 @@
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
@@ -10,20 +11,18 @@ local HttpService = game:GetService("HttpService")
 local Lighting = game:GetService("Lighting")
 
 local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
 
 -- ==============================================================================
--- ⚡ OTIMIZAÇÃO (ANTI-LAG)
+-- ⚡ OTIMIZAÇÃO E CONFIGURAÇÕES
 -- ==============================================================================
 local function OptimizeGame()
     pcall(function()
         settings().Rendering.QualityLevel = 1
-        settings().Rendering.MeshPartDetailLevel = Enum.MeshPartDetailLevel.Level01
         Lighting.GlobalShadows = false
         Lighting.FogEnd = 9e9
         Lighting.Brightness = 0
         for _, v in pairs(Lighting:GetDescendants()) do
-            if v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("ColorCorrectionEffect") or v:IsA("BloomEffect") or v:IsA("DepthOfFieldEffect") then
+            if v:IsA("BlurEffect") or v:IsA("SunRaysEffect") or v:IsA("BloomEffect") then
                 v.Enabled = false
             end
         end
@@ -31,19 +30,54 @@ local function OptimizeGame()
 end
 OptimizeGame()
 
+local SaveFileName = "LuresHub_Original_V2.json"
+
+-- Mantendo a velocidade alta do Ultimate (350)
+local SETTINGS = {
+    ChestNames = {"Chest1", "Chest2", "Chest3", "Chest4", "Chest5", "Chest6", "Chest"},
+    Speed = 350, 
+    AutoFarm = true,
+    StopOnRare = true,
+    CollectionRange = 15 -- Pega o baú antes de encostar (Pre-fire)
+}
+
+-- Estado interno para controlar movimento e morte
+local STATE = {
+    IsMoving = false,
+    CurrentTarget = nil,
+    MoveConnection = nil
+}
+
+-- ==============================================================================
+-- 🧠 CACHE DE BAÚS (ZERO LAG)
+-- ==============================================================================
+local ChestCache = {} 
+
+local function AddToCache(instance)
+    if table.find(SETTINGS.ChestNames, instance.Name) then
+        ChestCache[instance] = instance
+    end
+end
+
+local function RemoveFromCache(instance)
+    if ChestCache[instance] then
+        ChestCache[instance] = nil
+        if STATE.CurrentTarget == instance then
+            STATE.CurrentTarget = nil
+            STATE.IsMoving = false
+            if STATE.MoveConnection then STATE.MoveConnection:Disconnect() end
+        end
+    end
+end
+
+-- Scan inicial e Listeners
+for _, v in pairs(workspace:GetDescendants()) do AddToCache(v) end
+workspace.DescendantAdded:Connect(AddToCache)
+workspace.DescendantRemoving:Connect(RemoveFromCache)
+
 -- ==============================================================================
 -- 💾 SISTEMA DE SAVE
 -- ==============================================================================
-local SaveFileName = "LuresHub_Release_Config.json"
-
-local SETTINGS = {
-    ChestNames = {"Chest1", "Chest2", "Chest3", "Chest4", "Chest5", "Chest6", "Chest"},
-    Speed = 300,
-    VisitedChests = {},
-    AutoFarm = true,       
-    StopOnRare = true      
-}
-
 local function SaveConfig()
     local data = { AutoFarm = SETTINGS.AutoFarm, StopOnRare = SETTINGS.StopOnRare }
     writefile(SaveFileName, HttpService:JSONEncode(data))
@@ -61,35 +95,7 @@ end
 LoadConfig()
 
 -- ==============================================================================
--- 🛡️ ANTI-AFK
--- ==============================================================================
-LocalPlayer.Idled:Connect(function()
-    VirtualUser:CaptureController()
-    VirtualUser:ClickButton2(Vector2.new())
-end)
-
--- ==============================================================================
--- 🔍 VERIFICAÇÃO DE ITENS
--- ==============================================================================
-local RareItems = {"Fist of Darkness", "God's Chalice"}
-
-local function CheckRareItems()
-    if not SETTINGS.StopOnRare then return false end 
-    local found = false
-    
-    for _, item in ipairs(LocalPlayer.Backpack:GetChildren()) do
-        if table.find(RareItems, item.Name) then found = true; break end
-    end
-    if not found and LocalPlayer.Character then
-        for _, item in ipairs(LocalPlayer.Character:GetChildren()) do
-            if table.find(RareItems, item.Name) then found = true; break end
-        end
-    end
-    return found
-end
-
--- ==============================================================================
--- 🖥️ INTERFACE
+-- 🖥️ INTERFACE (VISUAL ORIGINAL RESTAURADO)
 -- ==============================================================================
 local Viewport = (gethui and gethui()) or (getgenv().protect_gui and protect_gui()) or CoreGui
 if Viewport:FindFirstChild("LuresHubAuto") then Viewport.LuresHubAuto:Destroy() end
@@ -106,7 +112,7 @@ MainFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
 MainFrame.BorderSizePixel = 0
 MainFrame.Parent = ScreenGui
 MainFrame.Active = true
-MainFrame.Draggable = true 
+MainFrame.Draggable = true
 
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
 local Stroke = Instance.new("UIStroke")
@@ -115,7 +121,7 @@ Stroke.Thickness = 2
 Stroke.Parent = MainFrame
 
 local Title = Instance.new("TextLabel")
-Title.Text = "LURES HUB - BAÚS" 
+Title.Text = "LURES HUB - BAÚS"
 Title.Size = UDim2.new(1, 0, 0, 25)
 Title.BackgroundTransparency = 1
 Title.TextColor3 = Color3.fromRGB(0, 230, 255)
@@ -137,7 +143,7 @@ local function SetStatus(text)
     StatusLabel.Text = text
 end
 
--- BOTÕES
+-- BOTÕES ORIGINAIS
 local ToggleFarmBtn = Instance.new("TextButton")
 ToggleFarmBtn.Parent = MainFrame
 ToggleFarmBtn.Size = UDim2.new(0.9, 0, 0, 32)
@@ -164,7 +170,7 @@ ToggleRareBtn.BackgroundColor3 = SETTINGS.StopOnRare and Color3.fromRGB(0, 150, 
 ToggleRareBtn.Text = SETTINGS.StopOnRare and "PARAR AO PEGAR ITEM AMALDIÇOADO: ON" or "PARAR AO PEGAR ITEM AMALDIÇOADO: OFF"
 ToggleRareBtn.Font = Enum.Font.GothamBold
 ToggleRareBtn.TextColor3 = Color3.new(1,1,1)
-ToggleRareBtn.TextSize = 11 
+ToggleRareBtn.TextSize = 11
 Instance.new("UICorner", ToggleRareBtn).CornerRadius = UDim.new(0, 6)
 
 local DescLabel = Instance.new("TextLabel")
@@ -172,7 +178,7 @@ DescLabel.Parent = MainFrame
 DescLabel.Size = UDim2.new(1, 0, 0, 20)
 DescLabel.Position = UDim2.new(0, 0, 0.88, 0)
 DescLabel.BackgroundTransparency = 1
-DescLabel.Text = "God's Chalice e Fist of Darkness" 
+DescLabel.Text = "God's Chalice e Fist of Darkness"
 DescLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
 DescLabel.Font = Enum.Font.SourceSansItalic
 DescLabel.TextSize = 13
@@ -185,72 +191,127 @@ ToggleRareBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ==============================================================================
--- 🌐 SERVER HOP (LÓGICA DO SCRIPT REFERÊNCIA)
+-- 🔍 VERIFICAÇÃO DE ITENS E ANTI-AFK
 -- ==============================================================================
-local function ServerHop()
-    SetStatus("Trocando de Server...")
-    local PlaceId = game.PlaceId
-    
-    -- Lógica exata do script que você enviou
-    local servers = {}
-    local success, req = pcall(function()
-        return game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")
-    end)
+LocalPlayer.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
 
-    if success then
-        local data = HttpService:JSONDecode(req)
-        for _, server in pairs(data.data) do
-            if type(server) == "table" and server.playing and server.maxPlayers then
-                if server.playing < server.maxPlayers and server.id ~= game.JobId then
-                    table.insert(servers, server.id)
-                end
-            end
-        end
+local RareItems = {"Fist of Darkness", "God's Chalice"}
+local function CheckRareItems()
+    if not SETTINGS.StopOnRare then return false end
+    local found = false
+    for _, item in ipairs(LocalPlayer.Backpack:GetChildren()) do if table.find(RareItems, item.Name) then found = true; break end end  
+    if not found and LocalPlayer.Character then for _, item in ipairs(LocalPlayer.Character:GetChildren()) do if table.find(RareItems, item.Name) then found = true; break end end end  
+    return found
+end
 
-        if #servers > 0 then
-            TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], LocalPlayer)
-        else
-            SetStatus("Nenhum server disponível. Tentando dnv...")
-            task.wait(1.5)
-            ServerHop()
+-- ==============================================================================
+-- 🚀 SISTEMA DE MOVIMENTAÇÃO (BYPASS + RESET AO MORRER)
+-- ==============================================================================
+local function Collect(chest)
+    if not chest or not chest.Parent then return end
+    local function fire(target)
+        if target:IsA("BasePart") then
+            firetouchinterest(LocalPlayer.Character.HumanoidRootPart, target, 0)
+            firetouchinterest(LocalPlayer.Character.HumanoidRootPart, target, 1)
         end
-    else
-        SetStatus("Erro na API. Tentando dnv...")
-        task.wait(1.5)
-        ServerHop()
     end
+    if chest:IsA("Model") then for _, v in pairs(chest:GetChildren()) do fire(v) end else fire(chest) end
+    VirtualInputManager:SendMouseButtonEvent(443, 275, 0, true, game, 1)
+    VirtualInputManager:SendMouseButtonEvent(443, 275, 0, false, game, 1)
 end
 
--- ==============================================================================
--- 🖱️ CLIQUE COORDENADO (443x275) - 11 SEGUNDOS
--- ==============================================================================
-local function SpamClickScreen()
-    task.spawn(function()
-        local StartTime = tick()
-        while tick() - StartTime < 11 do
-            if not SETTINGS.AutoFarm then break end 
-            
-            -- Clica exatamente nas coordenadas solicitadas
-            VirtualInputManager:SendMouseButtonEvent(443, 275, 0, true, game, 1)
-            task.wait()
-            VirtualInputManager:SendMouseButtonEvent(443, 275, 0, false, game, 1)
-            task.wait(0.05) 
+local function MoveToTarget(target)
+    if STATE.IsMoving then return end
+    STATE.IsMoving = true
+    STATE.CurrentTarget = target
+
+    -- Limpa conexão antiga se existir
+    if STATE.MoveConnection then STATE.MoveConnection:Disconnect() end
+
+    -- Loop Super Rápido (Heartbeat)
+    STATE.MoveConnection = RunService.Heartbeat:Connect(function(dt)
+        if not SETTINGS.AutoFarm or CheckRareItems() then
+            STATE.IsMoving = false
+            STATE.MoveConnection:Disconnect()
+            return
+        end
+
+        local Char = LocalPlayer.Character
+        local Root = Char and Char:FindFirstChild("HumanoidRootPart")
+        local Hum = Char and Char:FindFirstChild("Humanoid")
+
+        -- Correção do Bug da Morte: Se morreu, para tudo.
+        if not Root or not Hum or Hum.Health <= 0 then
+            STATE.IsMoving = false
+            STATE.MoveConnection:Disconnect()
+            return
+        end
+
+        if not target.Parent then
+            STATE.IsMoving = false
+            STATE.MoveConnection:Disconnect()
+            return
+        end
+
+        local DestPos = (target:IsA("Model") and target:GetModelCFrame().Position) or target.Position
+        local Dist = (DestPos - Root.Position).Magnitude
+
+        -- Coleta Preditiva (Pega antes de encostar)
+        if Dist <= SETTINGS.CollectionRange then
+            Collect(target)
+            STATE.IsMoving = false
+            STATE.MoveConnection:Disconnect()
+            ChestCache[target] = nil -- Tira do cache pra não voltar
+            return
+        end
+
+        -- Movimento Linear
+        local Dir = (DestPos - Root.Position).Unit
+        local Velocity = Dir * SETTINGS.Speed * dt
+        
+        if Velocity.Magnitude >= Dist then
+            Root.CFrame = CFrame.new(DestPos)
+        else
+            Root.CFrame = Root.CFrame + Velocity
+        end
+        Root.Velocity = Vector3.new(0,0,0) -- Evita cair
+        
+        -- Noclip
+        for _, v in pairs(Char:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
         end
     end)
 end
 
 -- ==============================================================================
--- 🏴‍☠️ JOIN TEAM
+-- 💀 DETECÇÃO DE RENASCIMENTO (CRUCIAL PARA O FIX)
+-- ==============================================================================
+LocalPlayer.CharacterAdded:Connect(function(NewChar)
+    -- Reseta o estado quando o personagem nasce
+    SetStatus("Renascendo...")
+    if STATE.MoveConnection then STATE.MoveConnection:Disconnect() end
+    STATE.IsMoving = false
+    STATE.CurrentTarget = nil
+    
+    task.wait(1) -- Pequeno delay para carregar o boneco
+    -- Reativa o loop
+end)
+
+-- ==============================================================================
+-- 🌐 SERVER HOP & PIRATES
 -- ==============================================================================
 local function JoinPirates()
     if LocalPlayer.Team and LocalPlayer.Team.Name == "Pirates" then return end
     task.spawn(function()
         local Start = tick()
         repeat
-            if tick() - Start > 20 then break end
+            if tick() - Start > 10 then break end
             pcall(function()
-                local Net = ReplicatedStorage:WaitForChild("Modules", 5):WaitForChild("Net", 5)
-                local Remote = Net:WaitForChild("RE/OnEventServiceActivity", 5)
+                local Net = ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Net")
+                local Remote = Net:WaitForChild("RE/OnEventServiceActivity")
                 Remote:FireServer("TeamSelect/Team/Pirates")
             end)
             task.wait(1)
@@ -258,137 +319,109 @@ local function JoinPirates()
     end)
 end
 
+local function ServerHop()
+    SetStatus("Trocando de Server...")
+    local PlaceId = game.PlaceId
+    local function ExecHop()
+        local req = game:HttpGet("https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Asc&limit=100")
+        local data = HttpService:JSONDecode(req)
+        local servers = {}
+        for _, s in pairs(data.data) do
+            if s.playing < s.maxPlayers and s.id ~= game.JobId then table.insert(servers, s.id) end
+        end
+        if #servers > 0 then
+            TeleportService:TeleportToPlaceInstance(PlaceId, servers[math.random(1, #servers)], LocalPlayer)
+        else
+            task.wait(1); ExecHop()
+        end
+    end
+    pcall(ExecHop)
+end
+
 -- ==============================================================================
--- 🚀 LOOP PRINCIPAL
+-- 🔄 LOOP PRINCIPAL
 -- ==============================================================================
-local function GetNextChest()
-    local MyRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if not MyRoot then return nil end
+local function GetNearestChest()
+    local Root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not Root then return nil end
+    
     local Nearest = nil
     local MinDist = math.huge
     
-    local items = workspace:GetDescendants()
-    for i, obj in ipairs(items) do
-        if i % 300 == 0 then task.wait() end 
-        if table.find(SETTINGS.ChestNames, obj.Name) and (obj:IsA("Model") or obj:IsA("BasePart")) then
-            if not SETTINGS.VisitedChests[obj] then
-                local Pos = (obj:IsA("Model") and obj.PrimaryPart and obj.PrimaryPart.Position) or (obj:IsA("BasePart") and obj.Position)
-                if Pos then
-                    local Dist = (Pos - MyRoot.Position).Magnitude
-                    if Dist < MinDist then
-                        MinDist = Dist
-                        Nearest = obj
-                    end
-                end
+    for chest, _ in pairs(ChestCache) do
+        if chest and chest.Parent then
+            local Pos = (chest:IsA("Model") and chest:GetModelCFrame().Position) or chest.Position
+            local Dist = (Pos - Root.Position).Magnitude
+            if Dist < MinDist then
+                MinDist = Dist
+                Nearest = chest
             end
+        else
+            ChestCache[chest] = nil
         end
     end
     return Nearest
 end
 
-local function Collect(Chest)
-    SetStatus("Pegando: " .. Chest.Name)
-    local function TouchParts(target)
-        if target:IsA("BasePart") then
-            firetouchinterest(LocalPlayer.Character.HumanoidRootPart, target, 0)
-            firetouchinterest(LocalPlayer.Character.HumanoidRootPart, target, 1)
-        end
-    end
-    if Chest:IsA("Model") then
-        for _, v in pairs(Chest:GetChildren()) do TouchParts(v) end
-    else
-        TouchParts(Chest)
-    end
-    
-    -- Clica na posição 443, 275 também ao coletar para garantir
-    VirtualInputManager:SendMouseButtonEvent(443, 275, 0, true, game, 1)
-    task.wait(0.05)
-    VirtualInputManager:SendMouseButtonEvent(443, 275, 0, false, game, 1)
-end
-
 task.spawn(function()
     while true do
+        task.wait() -- Loop roda no máximo FPS
+        
         if CheckRareItems() then
-            SETTINGS.AutoFarm = false 
+            SETTINGS.AutoFarm = false
             ToggleFarmBtn.Text = "STOP: ITEM RARO ENCONTRADO!"
-            ToggleFarmBtn.BackgroundColor3 = Color3.fromRGB(255, 170, 0) 
-            SaveConfig() 
+            ToggleFarmBtn.BackgroundColor3 = Color3.fromRGB(255, 170, 0)
+            SaveConfig()
             SetStatus("⚠️ ITENS NA MOCHILA! PARADO ⚠️")
-            while not SETTINGS.AutoFarm do task.wait(1) end
+            continue
         end
 
         if SETTINGS.AutoFarm then
-            if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                SetStatus("Carregando Personagem...")
+            local Char = LocalPlayer.Character
+            if not Char or not Char:FindFirstChild("HumanoidRootPart") or (Char:FindFirstChild("Humanoid") and Char.Humanoid.Health <= 0) then
+                SetStatus("Esperando Personagem...")
                 JoinPirates()
-                task.wait(2)
+                task.wait(1)
                 continue
             end
-
-            if LocalPlayer.Character then
-                for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-                    if v:IsA("BasePart") then v.CanCollide = false end
-                end
-            end
-
-            local Chest = GetNextChest()
-
-            if Chest then
-                SetStatus("Indo até: " .. Chest.Name)
-                local DestCFrame = (Chest:IsA("Model") and Chest:GetModelCFrame()) or Chest.CFrame
-                local MyRoot = LocalPlayer.Character.HumanoidRootPart
-                local Dist = (DestCFrame.Position - MyRoot.Position).Magnitude
-                
-                if Dist > 5 then
-                    local Time = Dist / SETTINGS.Speed
-                    local Tween = TweenService:Create(MyRoot, TweenInfo.new(Time, Enum.EasingStyle.Linear), {CFrame = DestCFrame})
-                    Tween:Play()
-                    
-                    local Elapsed = 0
-                    while Elapsed < Time do
-                        if not SETTINGS.AutoFarm then Tween:Cancel(); break end
-                        if not Chest.Parent then Tween:Cancel(); break end
-                        if CheckRareItems() then Tween:Cancel(); break end 
-                        if (DestCFrame.Position - MyRoot.Position).Magnitude < 4 then Tween:Cancel(); break end
-                        
-                        for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-                            if v:IsA("BasePart") then v.CanCollide = false end
-                        end
-                        Elapsed = Elapsed + 0.1
-                        task.wait(0.1)
-                    end
+            
+            if not STATE.IsMoving then
+                local Chest = GetNearestChest()
+                if Chest then
+                    SetStatus("Indo até: " .. Chest.Name)
+                    MoveToTarget(Chest)
                 else
-                    MyRoot.CFrame = DestCFrame
-                end
-
-                if Chest and Chest.Parent and SETTINGS.AutoFarm and not CheckRareItems() then
-                    Collect(Chest)
-                    SETTINGS.VisitedChests[Chest] = true
-                    task.wait(0.3)
-                end
-            else
-                SetStatus("Trocando Server...")
-                task.wait(1)
-                if SETTINGS.AutoFarm and not CheckRareItems() then
+                    SetStatus("Sem baús. Trocando server...")
+                    task.wait(1.5)
                     ServerHop()
+                    task.wait(10)
                 end
-                task.wait(5)
             end
         else
             SetStatus("Script Pausado")
-            task.wait(1)
+            if STATE.MoveConnection then STATE.MoveConnection:Disconnect() end
+            STATE.IsMoving = false
+            task.wait(0.5)
         end
-        task.wait(0.1)
+    end
+end)
+
+-- Click Spam (443, 275)
+task.spawn(function()
+    while true do
+        if SETTINGS.AutoFarm then
+            VirtualInputManager:SendMouseButtonEvent(443, 275, 0, true, game, 1)
+            task.wait()
+            VirtualInputManager:SendMouseButtonEvent(443, 275, 0, false, game, 1)
+        end
+        task.wait(0.05)
     end
 end)
 
 game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "Lures Hub V1",
-    Text = "Script carregado com sucesso!",
+    Title = "Lures Hub V2",
+    Text = "Visual Original + Correção de Morte!",
     Duration = 5,
 })
 
-if SETTINGS.AutoFarm then
-    SpamClickScreen()
-end
 JoinPirates()
